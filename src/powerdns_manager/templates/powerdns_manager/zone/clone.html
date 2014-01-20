@@ -1,0 +1,67 @@
+{% extends "admin/base_site.html" %}
+{% load i18n l10n static %}
+{% load url from future %}
+{% load admin_urls %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}" />{% endblock %}
+
+{% block breadcrumbs %}
+    <div class="breadcrumbs">
+        <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+        &rsaquo; <a href="{% url 'admin:app_list' app_label="powerdns_manager" %}">{% trans "PowerDNS Manager" %}</a>
+        &rsaquo; <a href="{% url 'admin:powerdns_manager_domain_changelist' %}">{% trans "Zone list" %}</a>
+        {% if id_list|length == 1 %}
+            &rsaquo; <a href="{% url 'admin:powerdns_manager_domain_change' id_list|first %}">{% trans "Zone change form" %}</a>
+        {% endif %}
+        &rsaquo; {% trans 'Clone zone' %}
+    </div>
+{% endblock %}
+
+{% block title %}{% trans 'Set the domain name of the cloned zone' %}{% endblock %}
+
+{% block content %}
+    <div id="content-main">
+        
+        <form action="" method="post">{% csrf_token %}
+        <div>
+            {% if form.errors %}
+                <p class="errornote">
+                {% blocktrans count counter=form.errors.items|length %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktrans %}
+                </p>
+            {% endif %}
+
+            <h1>{% trans 'Set the domain name of the cloned zone' %}</h1>
+            <p>{% trans "Enter a domain name for the cloned zone." %}</p>
+            
+            <fieldset class="module aligned">
+    
+                <div class="form-row">
+                    {{ form.clone_domain_name.errors }}
+                    <label for="id_clone_domain_name" class="">{% trans 'Domain Name' %}:</label>{{ form.clone_domain_name }}
+                    <p>{{ form.clone_domain_name.help_text }}</p>
+                </div>
+                
+                <div class="form-row">
+                    {{ form.option_clone_dynamic.errors }}
+                    <label for="id_option_clone_dynamic" class="">{% trans 'Clone dynamic setting' %}:</label>{{ form.option_clone_dynamic }}
+                    <p>{{ form.option_clone_dynamic.help_text }}</p>
+                </div>
+                
+                <div class="form-row">
+                    {{ form.option_clone_metadata.errors }}
+                    <label for="id_option_clone_metadata" class="">{% trans 'Clone zone metadata' %}:</label>{{ form.option_clone_metadata }}
+                    <p>{{ form.option_clone_metadata.help_text }}</p>
+                </div>
+                
+            </fieldset>
+
+            <div class="submit-row">
+                <input type="submit" value="{% trans 'Clone' %}" class="default" />
+            </div>
+
+            <script type="text/javascript">document.getElementById("id_clone_domain_name").focus();</script>
+        </div>
+        </form>
+
+    </div> <!-- content-main -->
+{% endblock %}

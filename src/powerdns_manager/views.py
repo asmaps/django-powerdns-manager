@@ -52,9 +52,12 @@ from powerdns_manager.forms import ZoneImportForm
 from powerdns_manager.forms import AxfrImportForm
 from powerdns_manager.forms import DynamicIPUpdateForm
 from powerdns_manager.forms import ZoneTransferForm
+from powerdns_manager.forms import ClonedZoneDomainForm
 from powerdns_manager.utils import process_zone_file
 from powerdns_manager.utils import process_axfr_response
 from powerdns_manager.utils import generate_zone_file
+from powerdns_manager.utils import interchange_domain
+from powerdns_manager.utils import generate_serial
 
 
 
@@ -268,7 +271,174 @@ def dynamic_ip_update_view(request):
 
 
 
+@login_required
+@csrf_protect
+def zone_clone_view(request, zone_id):
+    """Clones zone.
+    
+    Accepts a single Domain object ID.
+    
+    An intermediate page asking for the origin of the new zone.
 
+    Clones:
+    
+      - Resource Records
+      - Dynamic setting
+      - Domain Metadata
+      
+    """
+    # Permission check on models.
+    if not request.user.has_perms([
+            'powerdns_manager.add_domain',
+            'powerdns_manager.change_domain',
+            'powerdns_manager.add_record',
+            'powerdns_manager.change_record',
+            'powerdns_manager.add_domainmetadata',
+            'powerdns_manager.change_domainmetadata',
+            'powerdns_manager.add_dynamiczone',
+            'powerdns_manager.change_dynamiczone',
+        ]):
+        messages.error(request, 'Insufficient permissions for this action.')
+        return HttpResponseRedirect(reverse('admin:powerdns_manager_domain_changelist'))
+    
+    if request.method == 'POST':
+        form = ClonedZoneDomainForm(request.POST)
+        if form.is_valid():
+            
+            # Store Data from the form
+            
+            # Store the new domain name for the clone.
+            clone_domain_name = form.cleaned_data['clone_domain_name']
+            
+            option_clone_dynamic = form.cleaned_data['option_clone_dynamic']
+            option_clone_metadata = form.cleaned_data['option_clone_metadata']
+            
+            # Get the models
+            Domain = cache.get_model('powerdns_manager', 'Domain')
+            Record = cache.get_model('powerdns_manager', 'Record')
+            DynamicZone = cache.get_model('powerdns_manager', 'DynamicZone')
+            DomainMetadata = cache.get_model('powerdns_manager', 'DomainMetadata')
+            
+            # Clone base zone
+            
+            # Get the Domain object which will be cloned.
+            domain_obj = Domain.objects.get(id=zone_id)
+            
+            # Check domain object permissions
+            if not request.user.has_perms([
+                'powerdns_manager.add_domain', 'powerdns_manager.change_domain'], domain_obj):
+                messages.error(request, "Insufficient permissions to clone domain '%'" % force_unicode(domain_obj))
+                return HttpResponseRedirect(reverse('admin:powerdns_manager_domain_changelist'))
+            
+            # Create the clone (Check for uniqueness takes place in forms.ClonedZoneDomainForm 
+            clone_obj = Domain.objects.create(
+                name = clone_domain_name,
+                master = domain_obj.master,
+                #last_check = domain_obj.last_check,
+                type = domain_obj.type,
+                #notified_serial = domain_obj.notified_serial,
+                account = domain_obj.account,
+                created_by = request.user   # We deliberately do not use the domain_obj.created_by
+            )
+            #modeladmin.log_addition(request, clone_obj)
+            
+            # Clone Resource Records
+            
+            # Find all resource records of this domain (also clones empty non-terminals)
+            domain_rr_qs = Record.objects.filter(domain=domain_obj)
+            
+            # Create the clone's RRs
+            for rr in domain_rr_qs:
+                
+                # Construct RR name with interchanged domain
+                clone_rr_name = interchange_domain(rr.name, domain_obj.name, clone_domain_name)
+                
+                # Special treatment to the content of SOA and SRV RRs
+                if rr.type == 'SOA':
+                    content_parts = rr.content.split()
+                    # primary
+                    content_parts[0] = interchange_domain(content_parts[0], domain_obj.name, clone_domain_name)
+                    # hostmaster
+                    content_parts[1] = interchange_domain(content_parts[1], domain_obj.name, clone_domain_name)
+                    # Serial. Set new serial
+                    content_parts[2] = generate_serial()
+                    clone_rr_content = ' '.join(content_parts)
+                elif rr.type == 'SRV':
+                    content_parts = rr.content.split()
+                    # target
+                    content_parts[2] = interchange_domain(content_parts[2], domain_obj.name, clone_domain_name)
+                    clone_rr_content = ' '.join(content_parts)
+                else:
+                    clone_rr_content = interchange_domain(rr.content, domain_obj.name, clone_domain_name)
+                
+                # Create and save the cloned record.
+                clone_rr = Record(
+                    domain = clone_obj,
+                    name = clone_rr_name,
+                    type = rr.type,
+                    content = clone_rr_content,
+                    ttl = rr.ttl,
+                    prio = rr.prio,
+                    auth = rr.auth,
+                    ordername = rr.ordername
+                )
+                clone_rr.save()
+                #modeladmin.log_addition(request, clone_rr)
+            
+            # Clone Dynamic Zone setting
+            
+            if option_clone_dynamic:
+                
+                # Get the base domain's dynamic zone.
+                # There is only one Dynamic Zone object for each zone.
+                try:
+                    domain_dynzone_obj = DynamicZone.objects.get(domain=domain_obj)
+                except DynamicZone.DoesNotExist:
+                    pass
+                else:
+                    # Create and save the dynamic zone object for the clone.
+                    clone_dynzone_obj = DynamicZone(
+                        domain = clone_obj,
+                        is_dynamic = domain_dynzone_obj.is_dynamic
+                        )
+                    clone_dynzone_obj.save()
+            
+            # Clone the zone's metadata
+            
+            if option_clone_metadata:
+                
+                # Get the base domain's metadata object.
+                # There is only one metadata object for each zone.
+                try:
+                    domain_metadata_obj = DomainMetadata.objects.get(domain=domain_obj)
+                except DomainMetadata.DoesNotExist:
+                    pass
+                else:
+                    # Create and save the metadata object for the clone.
+                    clone_metadata_obj = DomainMetadata(
+                        domain = clone_obj,
+                        kind = domain_metadata_obj.kind,
+                        content = domain_metadata_obj.content
+                        )
+                    clone_metadata_obj.save()
+            
+            messages.info(request, 'Successfully cloned %s zone to %s' % \
+                (domain_obj.name, clone_domain_name))
+            
+            # Redirect to the new zone's change form.
+            return HttpResponseRedirect(reverse('admin:powerdns_manager_domain_change', args=(clone_obj.id,)))
+
+    else:
+        form = ClonedZoneDomainForm()
+    
+        info_dict = {
+            'form': form,
+            'zone_id': zone_id,
+        }
+        return render_to_response(
+            'powerdns_manager/zone/clone.html', info_dict, context_instance=RequestContext(request))
+    
+    
 
 @login_required
 @csrf_protect

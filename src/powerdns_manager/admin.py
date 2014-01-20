@@ -346,16 +346,10 @@ class DomainAdmin(admin.ModelAdmin):
         
         if "_transfer" in request.POST:
             return HttpResponseRedirect(reverse('zone_transfer', args=(obj.id,)))
+        elif "_clone" in request.POST:
+            return HttpResponseRedirect(reverse('zone_clone', args=(obj.id,)))
 
-#         elif "_saveasnew" in request.POST:
-#             msg = _('The %(name)s "%(obj)s" was added successfully. You may edit it again below.') % msg_dict
-#             self.message_user(request, msg, messages.SUCCESS)
-#             redirect_url = reverse('admin:%s_%s_change' %
-#                                    (opts.app_label, opts.model_name),
-#                                    args=(pk_value,),
-#                                    current_app=self.admin_site.name)
-#             redirect_url = add_preserved_filters({'preserved_filters': preserved_filters, 'opts': opts}, redirect_url)
-#             return HttpResponseRedirect(redirect_url)
+        return super(DomainAdmin, self).response_change(request, obj)
 
 admin.site.register(cache.get_model('powerdns_manager', 'Domain'), DomainAdmin)
 

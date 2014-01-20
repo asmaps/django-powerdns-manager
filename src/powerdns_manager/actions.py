@@ -439,64 +439,9 @@ clone_zone.short_description = "Clone the selected zone"
 
 
 def transfer_zone_to_user(modeladmin, request, queryset):
-    """Action that transfers the zone to another user.
-    
-    This action first displays a page which provides an input box where a
-    username must be set.
-    
-    It checks if the user has change permission.
-    
-    Based on: https://github.com/django/django/blob/1.4.2/django/contrib/admin/actions.py
-    
-    Important
-    ---------
-    In order to work requires some special form fields (see the template).
-    
-    """
-    opts = modeladmin.model._meta
-    app_label = opts.app_label
-    
-    # Check that the user has change permission for the Domain model
-    if not modeladmin.has_change_permission(request):
-        raise PermissionDenied
-    
-    # The user has selected a new domain type through the
-    # forms.ZoneTransferForm form. Make the changes to the selected
-    # objects and return a None to display the change list view again.
-    #if request.method == 'POST':
-    if request.POST.get('post'):
-        form = ZoneTransferForm(request.POST)
-        if form.is_valid():
-            transfer_to_username = request.POST.get('transfer_to_username')
-            
-            # Get the user object. Validation has taken place in the form.
-            User = get_user_model()
-            owner = User.objects.get(username=transfer_to_username)
-            
-            n = queryset.count()
-            
-            if n and owner:
-                for obj in queryset:
-                    obj.created_by = owner
-                    obj.update_serial()
-                    obj.save()
-                    obj_display = force_unicode(obj)
-                    modeladmin.log_change(request, obj, obj_display)
-                messages.info(request, 'Successfully transfered %d domain(s).' % n)
-            # Return None to display the change list page again.
-            return None
-    else:
-        form = ZoneTransferForm()
-        
-    info_dict = {
-        'form': form,
-        'queryset': queryset,
-        'opts': opts,
-        'app_label': app_label,
-        'action_checkbox_name': helpers.ACTION_CHECKBOX_NAME,
-    }
-    return render_to_response(
-        'powerdns_manager/actions/transfer_zone.html', info_dict, context_instance=RequestContext(request))
+    """Action that transfers the zone to another user."""
+    selected = request.POST.getlist(helpers.ACTION_CHECKBOX_NAME)
+    return HttpResponseRedirect(reverse('zone_transfer', args=(','.join(selected),)))
 transfer_zone_to_user.short_description = 'Transfer zone to another user'
 
 

@@ -30,6 +30,8 @@ from django.contrib import messages
 from django.contrib.admin import SimpleListFilter
 from django.utils.translation import ugettext_lazy as _
 from django.utils.crypto import get_random_string
+from django.http import HttpResponseRedirect
+from django.core.urlresolvers import reverse
 
 from powerdns_manager import settings
 from powerdns_manager.forms import DomainModelForm
@@ -253,6 +255,7 @@ class DomainAdmin(admin.ModelAdmin):
     save_on_top = True
     actions = [reset_api_key, set_domain_type_bulk, set_ttl_bulk, force_serial_update, clone_zone, transfer_zone_to_user]
     change_list_template = 'powerdns_manager/domain_changelist.html'
+    change_form_template = 'powerdns_manager/domain_changeform.html'
     
     #
     # Build the ``inlines`` list. Only inlines for enabled RR types are included.
@@ -330,6 +333,29 @@ class DomainAdmin(admin.ModelAdmin):
         super(DomainAdmin, self).save_related(request, form, formsets, change)
         # Send the zone_saved signal
         zone_saved.send(sender=self.model, instance=form.instance)
+    
+    def response_change(self, request, obj):
+        """Determines the HttpResponse for the change_view stage.
+        
+        Extends admin.ModelAdmin's ``response_change()`` method to support
+        the domain tools.
+        
+        """
+
+        # See template ``powerdns_manager/domain_change_form.html``
+        
+        if "_transfer" in request.POST:
+            return HttpResponseRedirect(reverse('zone_transfer', args=(obj.id,)))
+
+#         elif "_saveasnew" in request.POST:
+#             msg = _('The %(name)s "%(obj)s" was added successfully. You may edit it again below.') % msg_dict
+#             self.message_user(request, msg, messages.SUCCESS)
+#             redirect_url = reverse('admin:%s_%s_change' %
+#                                    (opts.app_label, opts.model_name),
+#                                    args=(pk_value,),
+#                                    current_app=self.admin_site.name)
+#             redirect_url = add_preserved_filters({'preserved_filters': preserved_filters, 'opts': opts}, redirect_url)
+#             return HttpResponseRedirect(redirect_url)
 
 admin.site.register(cache.get_model('powerdns_manager', 'Domain'), DomainAdmin)
 

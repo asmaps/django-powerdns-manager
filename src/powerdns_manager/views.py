@@ -26,24 +26,32 @@
 
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import get_user_model
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils.translation import ugettext_lazy as _
+from django.utils.encoding import force_unicode
 from django.http import HttpResponse
 from django.http import HttpResponseNotAllowed
 from django.http import HttpResponseBadRequest
 from django.http import HttpResponseNotFound
+from django.http import HttpResponseRedirect
+from django.core.urlresolvers import reverse
 from django.db.models.loading import cache
 from django.utils.html import mark_safe
 from django.core.validators import validate_ipv4_address
 from django.core.validators import validate_ipv6_address
 from django.core.exceptions import ValidationError
+from django.contrib import messages
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
 
 from powerdns_manager.forms import ZoneImportForm
 from powerdns_manager.forms import AxfrImportForm
 from powerdns_manager.forms import DynamicIPUpdateForm
+from powerdns_manager.forms import ZoneTransferForm
 from powerdns_manager.utils import process_zone_file
 from powerdns_manager.utils import process_axfr_response
 from powerdns_manager.utils import generate_zone_file
@@ -258,3 +266,75 @@ def dynamic_ip_update_view(request):
     else:
         return HttpResponseNotFound('error:No suitable resource record found')
 
+
+
+
+
+@login_required
+@csrf_protect
+def zone_transfer_view(request, id_list):
+    """Transfer zones to another user.
+    
+    Accepts a comma-delimited list of Domain object IDs.
+    
+    An intermediate page asking for the username of the target owner is used.
+    
+    """
+    # Create a list from the provided comma-delimited list of IDs.
+    id_list = id_list.split(',')
+    
+    if request.method == 'POST':
+        form = ZoneTransferForm(request.POST)
+        if form.is_valid():
+            transfer_to_username = request.POST.get('transfer_to_username')
+            
+            # Get the user object of the new owner.
+            # We always have a valid user object as validation has taken place
+            # in the ZoneTransferForm.
+            User = get_user_model()
+            owner = User.objects.get(username=transfer_to_username)
+            owner_display = force_unicode(owner)
+            
+            Domain = cache.get_model('powerdns_manager', 'Domain')
+            
+            for n, zone_id in enumerate(id_list):
+                obj = Domain.objects.get(id=zone_id)
+                obj_display = force_unicode(obj)
+                
+                # Check change permission
+                if request.user.has_perm('powerdns_manager.change_zone', obj):
+                    obj.created_by = owner
+                    obj.update_serial()
+                    obj.save()
+                    
+                    # Create log entry
+#                     LogEntry.objects.log_action(
+#                         user_id         = request.user.pk, 
+#                         content_type_id = ContentType.objects.get_for_model(obj).pk,
+#                         object_id       = obj.pk,
+#                         object_repr     = obj_display, 
+#                         action_flag     = CHANGE
+#                     )
+                else:
+                    messages.error(request, 'Permission denied for domain: %s' % obj_display)
+            
+            n += 1
+            if n == 1:
+                messages.info(request, "Successfully transfered domain '%s' to '%s'" % (obj_display, owner_display))
+            elif n > 1:
+                messages.info(request, 'Successfully transfered %d domains.' % n)
+                
+            # Redirect to the Domain changelist.
+            return HttpResponseRedirect(reverse('admin:powerdns_manager_domain_changelist'))
+        
+    else:
+        form = ZoneTransferForm()
+        
+        info_dict = {
+            'form': form,
+            'id_list': id_list,
+        }
+        return render_to_response(
+            'powerdns_manager/zone/transfer.html', info_dict, context_instance=RequestContext(request))
+    
+    

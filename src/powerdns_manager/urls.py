@@ -31,4 +31,5 @@ urlpatterns = patterns('powerdns_manager.views',
     url(r'^import/axfr/$', 'import_axfr_view', name='import_axfr'),
     url(r'^export/(?P<origin>[/.\-_\w]+)/$', 'export_zone_view', name='export_zone'),
     url(r'^update/$', 'dynamic_ip_update_view', name='dynamic_ip_update'),
+    url(r'^zone/transfer/(?P<id_list>[0-9,]+)/$', 'zone_transfer_view', name='zone_transfer'),
 )

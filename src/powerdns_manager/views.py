@@ -453,6 +453,13 @@ def zone_transfer_view(request, id_list):
     # Create a list from the provided comma-delimited list of IDs.
     id_list = id_list.split(',')
     
+    # Permission check on models.
+    if not request.user.has_perms([
+            'powerdns_manager.change_domain',
+        ]):
+        messages.error(request, 'Insufficient permissions for this action.')
+        return HttpResponseRedirect(reverse('admin:powerdns_manager_domain_changelist'))
+    
     if request.method == 'POST':
         form = ZoneTransferForm(request.POST)
         if form.is_valid():
@@ -472,7 +479,9 @@ def zone_transfer_view(request, id_list):
                 obj_display = force_unicode(obj)
                 
                 # Check change permission
-                if request.user.has_perm('powerdns_manager.change_zone', obj):
+                if not request.user.has_perm('powerdns_manager.change_domain', obj):
+                    messages.error(request, 'Permission denied for domain: %s' % obj_display)
+                else:
                     obj.created_by = owner
                     obj.update_serial()
                     obj.save()
@@ -485,8 +494,6 @@ def zone_transfer_view(request, id_list):
 #                         object_repr     = obj_display, 
 #                         action_flag     = CHANGE
 #                     )
-                else:
-                    messages.error(request, 'Permission denied for domain: %s' % obj_display)
             
             n += 1
             if n == 1:

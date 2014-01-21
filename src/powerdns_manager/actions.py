@@ -141,94 +141,15 @@ set_domain_type_bulk.short_description = "Set domain type"
 
 
 def set_ttl_bulk(modeladmin, request, queryset):
-    """Actions that resets TTL information on all resource records of the zone
+    """Action that resets TTL information on all resource records of the zone
     to the specified value.
-    
-    This action first displays a page which provides an input box to enter
-    the new TTL.
-    
-    It checks if the user has change permission.
-    
-    Based on: https://github.com/django/django/blob/1.4.2/django/contrib/admin/actions.py
-    
-    Important
-    ---------
-    In order to work requires some special form fields (see the template).
-    
     """
-    opts = modeladmin.model._meta
-    app_label = opts.app_label
-    
-    Domain = cache.get_model('powerdns_manager', 'Domain')
-    Record = cache.get_model('powerdns_manager', 'Record')
-    
-    perm_domain_change = '%s.%s' % (opts.app_label, opts.get_change_permission())
-    perm_record_change = '%s.change_record' % opts.app_label
-    
-    if not request.user.has_perms([perm_domain_change, perm_record_change]):
-        raise PermissionDenied
-    
-    # Check that the user has change permission for the Re model
+    # Check that the user has change permission for the change modeladmin form.
     if not modeladmin.has_change_permission(request):
         raise PermissionDenied
-    
-    # The user has set a new TTL value through the forms.TtlSelectionForm form.
-    # Make the changes to the selected objects and return a None to display the
-    # change list view again.
-    #if request.method == 'POST':
-    if request.POST.get('post'):
-        form = TtlSelectionForm(request.POST)
-        if form.is_valid():
-            new_ttl = form.cleaned_data['new_ttl']
-            reset_zone_minimum = form.cleaned_data['reset_zone_minimum']
-            
-            n = queryset.count()
-            record_count = 0
-            
-            if n and new_ttl:
-                for domain_obj in queryset:
-                    # Find all resource records of this domain (excludes empty non-terminals)
-                    qs = Record.objects.filter(domain=domain_obj).exclude(type__isnull=True)
-                    # Now set the new TTL
-                    for rr in qs:
-                        rr.ttl = int(new_ttl)
-                        # If this is the SOA record and ``reset_zone_minimum`` has
-                        # been checked, set the minimum TTL of the SOA record equal
-                        # to the ``new_ttl`` value
-                        #
-                        # Important: We do not call ``models.Domain.set_minimum_ttl()``
-                        # because we edit the SOA record here.
-                        #
-                        if reset_zone_minimum and rr.type == 'SOA':
-                            bits = rr.content.split()
-                            # SOA content:  primary hostmaster serial refresh retry expire default_ttl
-                            bits[6] = str(new_ttl)
-                            rr.content = ' '.join(bits)
-                        # Save the resource record
-                        rr.save()
-                        rr_display = force_unicode(rr)
-                        modeladmin.log_change(request, rr, rr_display)
-                    
-                    # Update the domain serial
-                    domain_obj.update_serial()
-                    
-                    record_count += len(qs)
-                messages.info(request, 'Successfully updated %d zones (%d total records).' % (n, record_count))
-            # Return None to display the change list page again.
-            return None
-    else:
-        form = TtlSelectionForm()
-    
-    info_dict = {
-        'form': form,
-        'queryset': queryset,
-        'opts': opts,
-        'app_label': app_label,
-        'action_checkbox_name': helpers.ACTION_CHECKBOX_NAME,
-    }
-    return render_to_response(
-        'powerdns_manager/actions/set_ttl.html', info_dict, context_instance=RequestContext(request))
-set_ttl_bulk.short_description = "Set Resource Records TTL"
+    selected = request.POST.getlist(helpers.ACTION_CHECKBOX_NAME)
+    return HttpResponseRedirect(reverse('zone_set_ttl', args=(','.join(selected),)))
+set_ttl_bulk.short_description = 'Set Resource Records TTL'
 
 
 

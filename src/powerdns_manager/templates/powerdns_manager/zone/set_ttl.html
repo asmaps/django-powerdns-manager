@@ -6,12 +6,15 @@
 {% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}" />{% endblock %}
 
 {% block breadcrumbs %}
-	<div class="breadcrumbs">
-		<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
-		&rsaquo; <a href="{% url 'admin:app_list' app_label=app_label %}">{{ app_label|capfirst|escape }}</a>
-		&rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
-		&rsaquo; {% trans 'Set TTL on records of selected zones' %}
-	</div>
+    <div class="breadcrumbs">
+        <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+        &rsaquo; <a href="{% url 'admin:app_list' app_label="powerdns_manager" %}">{% trans "PowerDNS Manager" %}</a>
+        &rsaquo; <a href="{% url 'admin:powerdns_manager_domain_changelist' %}">{% trans "Zone list" %}</a>
+        {% if id_list|length == 1 %}
+            &rsaquo; <a href="{% url 'admin:powerdns_manager_domain_change' id_list|first %}">{% trans "Zone change form" %}</a>
+        {% endif %}
+        &rsaquo; {% trans 'Set TTL on records of selected zones' %}
+    </div>
 {% endblock %}
 
 {% block title %}{% trans 'Set TTL' %}{% endblock %}
@@ -44,14 +47,6 @@
 
             </fieldset>
 
-            {# Special Fields #}
-            {# These are needed for the action code to work. This an undocumented Django feature #}
-            {% for obj in queryset %}
-                <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk|unlocalize }}" />
-            {% endfor %}
-            <input type="hidden" name="action" value="set_ttl_bulk" />
-            <input type="hidden" name="post" value="yes" />
-            
             <div class="submit-row">
                 <input type="submit" value="{% trans 'Save' %}" class="default" />
             </div>

@@ -348,6 +348,8 @@ class DomainAdmin(admin.ModelAdmin):
             return HttpResponseRedirect(reverse('zone_transfer', args=(obj.id,)))
         elif "_clone" in request.POST:
             return HttpResponseRedirect(reverse('zone_clone', args=(obj.id,)))
+        elif "_set_rr_ttl" in request.POST:
+            return HttpResponseRedirect(reverse('zone_set_ttl', args=(obj.id,)))
 
         return super(DomainAdmin, self).response_change(request, obj)
 

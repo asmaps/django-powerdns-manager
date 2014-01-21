@@ -52,6 +52,8 @@ from powerdns_manager.forms import ZoneImportForm
 from powerdns_manager.forms import AxfrImportForm
 from powerdns_manager.forms import DynamicIPUpdateForm
 from powerdns_manager.forms import ZoneTransferForm
+from powerdns_manager.forms import TemplateOriginForm
+from powerdns_manager.forms import TtlSelectionForm
 from powerdns_manager.forms import ClonedZoneDomainForm
 from powerdns_manager.utils import process_zone_file
 from powerdns_manager.utils import process_axfr_response
@@ -268,6 +270,92 @@ def dynamic_ip_update_view(request):
         return HttpResponse('Success')
     else:
         return HttpResponseNotFound('error:No suitable resource record found')
+
+
+
+
+@login_required
+@csrf_protect
+def zone_set_ttl_view(request, id_list):
+    """Resets TTL information on all resource records of the zone.
+    
+    Accepts a comma-delimited list of Domain object IDs.
+    
+    An intermediate page asking for the new TTL is used.
+    
+    """
+    # Create a list from the provided comma-delimited list of IDs.
+    id_list = id_list.split(',')
+    
+    # Permission check on models.
+    if not request.user.has_perms([
+            'powerdns_manager.change_domain',
+            'powerdns_manager.change_record',
+        ]):
+        messages.error(request, 'Insufficient permissions for this action.')
+        return HttpResponseRedirect(reverse('admin:powerdns_manager_domain_changelist'))
+    
+    if request.method == 'POST':
+        form = TtlSelectionForm(request.POST)
+        if form.is_valid():
+            new_ttl = form.cleaned_data['new_ttl']
+            reset_zone_minimum = form.cleaned_data['reset_zone_minimum']
+            
+            Domain = cache.get_model('powerdns_manager', 'Domain')
+            Record = cache.get_model('powerdns_manager', 'Record')
+            
+            record_count = 0
+            
+            for n, zone_id in enumerate(id_list):
+                obj = Domain.objects.get(id=zone_id)
+                obj_display = force_unicode(obj)
+                
+                # Check change permission
+                if not request.user.has_perm('powerdns_manager.change_domain', obj):
+                    messages.error(request, 'Permission denied for domain: %s' % obj_display)
+                else:
+                    # Find all resource records of this domain (excludes empty non-terminals)
+                    qs = Record.objects.filter(domain=obj).exclude(type__isnull=True)
+                    # Now set the new TTL
+                    for rr in qs:
+                        rr.ttl = int(new_ttl)
+                        # If this is the SOA record and ``reset_zone_minimum`` has
+                        # been checked, set the minimum TTL of the SOA record equal
+                        # to the ``new_ttl`` value
+                        #
+                        # Important: We do not call ``models.Domain.set_minimum_ttl()``
+                        # because we edit the SOA record here.
+                        #
+                        if reset_zone_minimum and rr.type == 'SOA':
+                            bits = rr.content.split()
+                            # SOA content:  primary hostmaster serial refresh retry expire default_ttl
+                            bits[6] = str(new_ttl)
+                            rr.content = ' '.join(bits)
+                        # Save the resource record
+                        rr.save()
+                        rr_display = force_unicode(rr)
+                    
+                    # Update the domain serial
+                    obj.update_serial()
+                    
+                    record_count += len(qs)
+            
+            n += 1
+            if n == 1:
+                messages.info(request, "Successfully updated %s resource records of '%s'" % (record_count, obj_display))
+            elif n > 1:
+                messages.info(request, 'Successfully updated %s zones (%s total resource records).' % (n, record_count))
+                
+            # Redirect to the Domain changelist.
+            return HttpResponseRedirect(reverse('admin:powerdns_manager_domain_changelist'))
+        
+    else:
+        info_dict = {
+            'form': TtlSelectionForm(),
+            'id_list': id_list,
+        }
+        return render_to_response(
+            'powerdns_manager/zone/set_ttl.html', info_dict, context_instance=RequestContext(request))
 
 
 
@@ -513,5 +601,4 @@ def zone_transfer_view(request, id_list):
         }
         return render_to_response(
             'powerdns_manager/zone/transfer.html', info_dict, context_instance=RequestContext(request))
-    
     

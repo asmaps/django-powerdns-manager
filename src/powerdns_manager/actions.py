@@ -35,6 +35,8 @@ from powerdns_manager.utils import generate_api_key
 
 
 def reset_api_key(modeladmin, request, queryset):
+    if not modeladmin.has_change_permission(request):
+        raise PermissionDenied
     DynamicZone = cache.get_model('powerdns_manager', 'DynamicZone')
     n = queryset.count()
     for domain_obj in queryset:
@@ -58,7 +60,6 @@ reset_api_key.short_description = "Reset API Key"
 
 def set_domain_type_bulk(modeladmin, request, queryset):
     """Actions that sets the domain type on the selected Domain instances."""
-    # Check that the user has change permission for the change modeladmin form.
     if not modeladmin.has_change_permission(request):
         raise PermissionDenied
     selected = request.POST.getlist(helpers.ACTION_CHECKBOX_NAME)
@@ -70,7 +71,6 @@ def set_ttl_bulk(modeladmin, request, queryset):
     """Action that resets TTL information on all resource records of the zone
     to the specified value.
     """
-    # Check that the user has change permission for the change modeladmin form.
     if not modeladmin.has_change_permission(request):
         raise PermissionDenied
     selected = request.POST.getlist(helpers.ACTION_CHECKBOX_NAME)
@@ -82,6 +82,8 @@ def force_serial_update(modeladmin, request, queryset):
     """Action that updates the serial resets TTL information on all resource
     records of the selected zones.
     """
+    if not modeladmin.has_change_permission(request):
+        raise PermissionDenied
     for domain in queryset:
         domain.update_serial()
     n = queryset.count()
@@ -95,24 +97,20 @@ def clone_zone(modeladmin, request, queryset):
     Accepts only one selected zone.
 
     """
+    if not modeladmin.has_add_permission(request):
+        raise PermissionDenied
+    elif not modeladmin.has_change_permission(request):
+        raise PermissionDenied
     n = queryset.count()
     if n != 1:
         messages.error(request, 'Only one zone may be selected for cloning.')
         return HttpResponseRedirect(reverse('admin:powerdns_manager_domain_changelist'))
-    
-    # Check that the user has change permission for the add and change modeladmin forms
-    if not modeladmin.has_add_permission(request):
-        raise PermissionDenied
-    if not modeladmin.has_change_permission(request):
-        raise PermissionDenied
-    
     return HttpResponseRedirect(reverse('zone_clone', args=(queryset[0].id,)))
 clone_zone.short_description = "Clone the selected zone"
 
 
 def transfer_zone_to_user(modeladmin, request, queryset):
     """Action that transfers the zone to another user."""
-    # Check that the user has change permission for the change modeladmin form.
     if not modeladmin.has_change_permission(request):
         raise PermissionDenied
     selected = request.POST.getlist(helpers.ACTION_CHECKBOX_NAME)
@@ -126,6 +124,8 @@ def create_zone_from_template(modeladmin, request, queryset):
     Accepts only one selected template.
     
     """
+    if not modeladmin.has_change_permission(request):
+        raise PermissionDenied
     n = queryset.count()
     if n != 1:
         messages.error(request, 'Only one template may be selected.')

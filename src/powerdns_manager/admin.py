@@ -29,7 +29,6 @@ from django.db.models.loading import cache
 from django.contrib import messages
 from django.contrib.admin import SimpleListFilter
 from django.utils.translation import ugettext_lazy as _
-from django.utils.crypto import get_random_string
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 
@@ -65,7 +64,6 @@ from powerdns_manager.actions import reset_api_key
 from powerdns_manager.actions import clone_zone
 from powerdns_manager.actions import transfer_zone_to_user
 from powerdns_manager.actions import create_zone_from_template
-from powerdns_manager.utils import generate_api_key
 
 
 

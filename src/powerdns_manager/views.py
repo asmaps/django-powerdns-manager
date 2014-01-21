@@ -91,7 +91,7 @@ def import_zone_view(request):
         'form': form,
     }
     return render_to_response(
-        'powerdns_manager/zoneimport/zonefile.html', info_dict, context_instance=RequestContext(request))
+        'powerdns_manager/zone/import/zonefile.html', info_dict, context_instance=RequestContext(request))
 
 
 

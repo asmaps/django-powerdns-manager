@@ -247,8 +247,10 @@ class DomainAdmin(admin.ModelAdmin):
     form = DomainModelForm
     fields = ('date_modified', 'name', 'type', 'master', 'created_by')
     readonly_fields = ('date_modified', 'created_by')
-    list_display = ('name', 'export_zone_html_link', 'type', 'master', 'date_modified', 'created_by')
-    list_filter = ['type', 'created_by']
+    #list_display = ('name', 'export_zone_html_link', 'type', 'master', 'date_modified', 'created_by')
+    #list_display -- Set by get_list_display()
+    #list_filter = ['type', 'created_by']
+    #list_filter -- Set by get_list_filter()
     search_fields = ['name', 'master', 'created_by']
     verbose_name = 'zone'
     verbose_name_plural = 'zones'
@@ -296,6 +298,18 @@ class DomainAdmin(admin.ModelAdmin):
     #inlines.append(EmptyNonTerminalRecordInline)
     inlines.append(DomainMetadataInline)
     inlines.append(CryptoKeyInline)
+    
+    def get_list_display(self, request):
+        list_display = ['name', 'export_zone_html_link', 'type', 'master', 'date_modified']
+        if request.user.is_superuser:
+            list_display.append('created_by')
+        return list_display
+    
+    def get_list_filter(self, request):
+        list_filter = ['type', ]
+        if request.user.is_superuser:
+            list_filter.append('created_by')
+        return list_filter
     
     def queryset(self, request):
         qs = super(DomainAdmin, self).queryset(request)

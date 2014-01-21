@@ -334,12 +334,14 @@ def zone_set_type_view(request, id_list):
         return HttpResponseRedirect(reverse('admin:powerdns_manager_domain_changelist'))
     
     else:
-        info_dict = {
-            'form': ZoneTypeSelectionForm(),
-            'id_list': id_list,
-        }
-        return render_to_response(
-            'powerdns_manager/zone/set_type.html', info_dict, context_instance=RequestContext(request))
+        form = ZoneTypeSelectionForm()
+        
+    info_dict = {
+        'form': form,
+        'id_list': id_list,
+    }
+    return render_to_response(
+        'powerdns_manager/zone/set_type.html', info_dict, context_instance=RequestContext(request))
 
 
 
@@ -419,12 +421,14 @@ def zone_set_ttl_view(request, id_list):
             return HttpResponseRedirect(reverse('admin:powerdns_manager_domain_changelist'))
         
     else:
-        info_dict = {
-            'form': TtlSelectionForm(),
-            'id_list': id_list,
-        }
-        return render_to_response(
-            'powerdns_manager/zone/set_ttl.html', info_dict, context_instance=RequestContext(request))
+        form = TtlSelectionForm()
+        
+    info_dict = {
+        'form': form,
+        'id_list': id_list,
+    }
+    return render_to_response(
+        'powerdns_manager/zone/set_ttl.html', info_dict, context_instance=RequestContext(request))
 
 
 
@@ -587,12 +591,12 @@ def zone_clone_view(request, zone_id):
     else:
         form = ClonedZoneDomainForm()
     
-        info_dict = {
-            'form': form,
-            'zone_id': zone_id,
-        }
-        return render_to_response(
-            'powerdns_manager/zone/clone.html', info_dict, context_instance=RequestContext(request))
+    info_dict = {
+        'form': form,
+        'zone_id': zone_id,
+    }
+    return render_to_response(
+        'powerdns_manager/zone/clone.html', info_dict, context_instance=RequestContext(request))
     
     
 
@@ -663,12 +667,12 @@ def zone_transfer_view(request, id_list):
     else:
         form = ZoneTransferForm()
         
-        info_dict = {
-            'form': form,
-            'id_list': id_list,
-        }
-        return render_to_response(
-            'powerdns_manager/zone/transfer.html', info_dict, context_instance=RequestContext(request))
+    info_dict = {
+        'form': form,
+        'id_list': id_list,
+    }
+    return render_to_response(
+        'powerdns_manager/zone/transfer.html', info_dict, context_instance=RequestContext(request))
     
 
 

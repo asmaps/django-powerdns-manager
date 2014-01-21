@@ -10,7 +10,7 @@
 #  Public Source Code Repository:
 #    - https://source.codetrax.org/hgroot/django-powerdns-manager
 #
-#  Copyright 2012-2014 George Notaras <gnot [at] g-loaded.eu>
+#  Copyright 2012-2014 George Notaras <gnot@g-loaded.eu>
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -64,9 +64,9 @@ if __name__=='__main__':
         version = get_version(),
         license = 'Apache License version 2',
         author = 'George Notaras',
-        author_email = 'gnot [at] g-loaded.eu',
+        author_email = 'gnot@g-loaded.eu',
         maintainer = 'George Notaras',
-        maintainer_email = 'gnot [at] g-loaded.eu',
+        maintainer_email = 'gnot@g-loaded.eu',
         url = 'http://www.codetrax.org/projects/django-powerdns-manager',
         description = 'django-powerdns-manager is a web based PowerDNS administration panel.',
         long_description = read('README.rst'),

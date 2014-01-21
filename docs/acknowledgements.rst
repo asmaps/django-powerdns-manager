@@ -5,7 +5,7 @@ Acknowledgements
 
 *django-powerdns-manager* has been developed by:
 
-- `George Notaras`_ <gnot [at] g-loaded.eu>, CodeTRAX.org
+- `George Notaras`_ <gnot@g-loaded.eu>, CodeTRAX.org
 
 .. _`George Notaras`: http://www.g-loaded.eu
 

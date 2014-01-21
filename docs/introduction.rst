@@ -139,7 +139,7 @@ You can still get community support at the `Community Support Forums`_:
 License
 =======
 
-Copyright 2012-2014 George Notaras <gnot [at] g-loaded.eu>
+Copyright 2012-2014 George Notaras <gnot@g-loaded.eu>
 
 Licensed under the *Apache License, Version 2.0* (the "*License*");
 you may not use this file except in compliance with the License.

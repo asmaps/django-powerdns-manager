@@ -24,32 +24,14 @@
 #  limitations under the License.
 #
 
-from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponseRedirect
-from django import template
 from django.core.exceptions import PermissionDenied
 from django.contrib.admin import helpers
-from django.contrib.admin.util import get_deleted_objects, model_ngettext
-from django.db import router
-from django.shortcuts import render_to_response
-from django.utils.encoding import force_unicode
-from django.utils.translation import ugettext_lazy, ugettext as _
 from django.contrib import messages
-from django.shortcuts import render_to_response
-from django.template import RequestContext
 from django.db.models.loading import cache
 from django.core.urlresolvers import reverse
-from django.contrib.auth import get_user_model
 
-from powerdns_manager.forms import ZoneTypeSelectionForm
-from powerdns_manager.forms import TtlSelectionForm
-from powerdns_manager.forms import ClonedZoneDomainForm
-from powerdns_manager.forms import ZoneTransferForm
-from powerdns_manager.forms import TemplateOriginForm
-from powerdns_manager.utils import generate_serial
 from powerdns_manager.utils import generate_api_key
-from powerdns_manager.utils import interchange_domain
-from powerdns_manager.utils import process_zone_file
 
 
 

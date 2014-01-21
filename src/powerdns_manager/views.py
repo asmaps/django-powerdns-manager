@@ -705,16 +705,21 @@ def template_create_zone_view(request, template_id):
         template_obj = ZoneTemplate.objects.get(id=template_id)
         template_obj_display = force_unicode(template_obj)
         
-        # Replace placeholder with origin in the template content.
-        zonetext = template_obj.content.replace('#origin#', origin)
-        
-        process_zone_file(origin, zonetext, request.user)
-        
-        messages.info(request, "Successfully created zone '%s' from template '%s'." % (origin, template_obj.name))
-        
-        # Redirect to the new zone's change form.
-        domain_obj = Domain.objects.get(name=origin)
-        return HttpResponseRedirect(reverse('admin:powerdns_manager_domain_change', args=(domain_obj.id,)))
+        # Check template ownership.
+        if request.user != template_obj.created_by:
+            messages.error(request, 'Permission denied for template: %s' % template_obj_display)
+            return HttpResponseRedirect(reverse('admin:powerdns_manager_zonetemplate_changelist'))
+        else:
+            # Replace placeholder with origin in the template content.
+            zonetext = template_obj.content.replace('#origin#', origin)
+            
+            process_zone_file(origin, zonetext, request.user)
+            
+            messages.info(request, "Successfully created zone '%s' from template '%s'." % (origin, template_obj.name))
+            
+            # Redirect to the new zone's change form.
+            domain_obj = Domain.objects.get(name=origin)
+            return HttpResponseRedirect(reverse('admin:powerdns_manager_domain_change', args=(domain_obj.id,)))
                     
                     # Create log entry
 #                     LogEntry.objects.log_action(

@@ -10,7 +10,7 @@
 #  Public Source Code Repository:
 #    - https://source.codetrax.org/hgroot/django-powerdns-manager
 #
-#  Copyright 2012 George Notaras <gnot [at] g-loaded.eu>
+#  Copyright 2012-2014 George Notaras <gnot [at] g-loaded.eu>
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.

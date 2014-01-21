@@ -129,12 +129,25 @@ def import_axfr_view(request):
 
 @login_required
 def export_zone_view(request, origin):
-    info_dict = {
-        'zone_text': generate_zone_file(origin),
-        'origin': origin,
-    }
-    return render_to_response(
-        'powerdns_manager/zone/export/zonefile.html', info_dict, context_instance=RequestContext(request))
+    
+    Domain = cache.get_model('powerdns_manager', 'Domain')
+    
+    obj = Domain.objects.get(name=origin)
+    obj_display = force_unicode(obj)
+            
+    # Check zone ownership.
+    if request.user != obj.created_by:
+        messages.error(request, 'Permission denied for domain: %s' % obj_display)
+        # Redirect to the Domain changelist.
+        return render_to_response('powerdns_manager/zone/import/error.html', {})
+        return HttpResponseRedirect(reverse('admin:powerdns_manager_domain_changelist'))
+    else:
+        info_dict = {
+            'zone_text': generate_zone_file(origin),
+            'origin': origin,
+        }
+        return render_to_response(
+            'powerdns_manager/zone/export/zonefile.html', info_dict, context_instance=RequestContext(request))
 
 
 
@@ -303,8 +316,8 @@ def zone_set_type_view(request, id_list):
             obj = Domain.objects.get(id=zone_id)
             obj_display = force_unicode(obj)
             
-            # Check change permission
-            if not request.user.has_perm('powerdns_manager.change_domain', obj):
+            # Check zone ownership.
+            if request.user != obj.created_by:
                 messages.error(request, 'Permission denied for domain: %s' % obj_display)
             else:
                 obj.type = domain_type
@@ -366,8 +379,8 @@ def zone_set_ttl_view(request, id_list):
                 obj = Domain.objects.get(id=zone_id)
                 obj_display = force_unicode(obj)
                 
-                # Check change permission
-                if not request.user.has_perm('powerdns_manager.change_domain', obj):
+                # Check zone ownership.
+                if request.user != obj.created_by:
                     messages.error(request, 'Permission denied for domain: %s' % obj_display)
                 else:
                     # Find all resource records of this domain (excludes empty non-terminals)
@@ -468,10 +481,9 @@ def zone_clone_view(request, zone_id):
             # Get the Domain object which will be cloned.
             domain_obj = Domain.objects.get(id=zone_id)
             
-            # Check domain object permissions
-            if not request.user.has_perms([
-                'powerdns_manager.add_domain', 'powerdns_manager.change_domain'], domain_obj):
-                messages.error(request, "Insufficient permissions to clone domain '%'" % force_unicode(domain_obj))
+            # Check zone ownership.
+            if request.user != domain_obj.created_by:
+                messages.error(request, "Insufficient permissions to clone domain '%s'" % force_unicode(domain_obj))
                 return HttpResponseRedirect(reverse('admin:powerdns_manager_domain_changelist'))
             
             # Create the clone (Check for uniqueness takes place in forms.ClonedZoneDomainForm 
@@ -622,8 +634,8 @@ def zone_transfer_view(request, id_list):
                 obj = Domain.objects.get(id=zone_id)
                 obj_display = force_unicode(obj)
                 
-                # Check change permission
-                if not request.user.has_perm('powerdns_manager.change_domain', obj):
+                # Check zone ownership.
+                if request.user != obj.created_by:
                     messages.error(request, 'Permission denied for domain: %s' % obj_display)
                 else:
                     obj.created_by = owner

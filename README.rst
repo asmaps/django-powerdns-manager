@@ -16,10 +16,10 @@ exists in the license_ section.
 
 .. warning::
 
-   *django-powerdns-manager* is not a finished product and should be considered
-   **work in progress**. Until the first stable release is out, changes to the
-   database schema and the supported features may occur without notice and
-   without the provision of migration instructions or scripts.
+   *django-powerdns-manager* should be considered **work in progress**.
+   Until the first stable release is out, changes to the database schema and
+   the supported features may occur without notice and without the provision
+   of migration instructions or scripts.
    
    Please, do not use this software in production.
    

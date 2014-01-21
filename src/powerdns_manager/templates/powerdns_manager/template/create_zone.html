@@ -8,8 +8,9 @@
 {% block breadcrumbs %}
 	<div class="breadcrumbs">
 		<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
-		&rsaquo; <a href="{% url 'admin:app_list' app_label=app_label %}">{{ app_label|capfirst|escape }}</a>
-		&rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+		&rsaquo; <a href="{% url 'admin:app_list' app_label="powerdns_manager" %}">{% trans "PowerDNS Manager" %}</a>
+		&rsaquo; <a href="{% url 'admin:powerdns_manager_zonetemplate_changelist' %}">{% trans "Template list" %}</a>
+		&rsaquo; <a href="{% url 'admin:powerdns_manager_zonetemplate_change' template_id %}">{% trans "Template change form" %}</a>
 		&rsaquo; {% trans 'Create zone from template' %}
 	</div>
 {% endblock %}
@@ -38,14 +39,6 @@
                 </div>
 
             </fieldset>
-
-            {# Special Fields #}
-            {# These are needed for the action code to work. This an undocumented Django feature #}
-            {% for obj in queryset %}
-                <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk|unlocalize }}" />
-            {% endfor %}
-            <input type="hidden" name="action" value="create_zone_from_template" />
-            <input type="hidden" name="post" value="yes" />
             
             <div class="submit-row">
                 <input type="submit" value="{% trans 'Create' %}" class="default" />

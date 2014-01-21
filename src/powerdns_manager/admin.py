@@ -350,6 +350,10 @@ class DomainAdmin(admin.ModelAdmin):
             return HttpResponseRedirect(reverse('zone_clone', args=(obj.id,)))
         elif "_set_rr_ttl" in request.POST:
             return HttpResponseRedirect(reverse('zone_set_ttl', args=(obj.id,)))
+        elif "_reset_api_key" in request.POST:
+            Domain = cache.get_model('powerdns_manager', 'Domain')
+            qs = Domain.objects.filter(id=obj.id)
+            reset_api_key(self, request, qs)
 
         return super(DomainAdmin, self).response_change(request, obj)
 

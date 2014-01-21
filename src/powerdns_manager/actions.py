@@ -81,7 +81,7 @@ def reset_api_key(modeladmin, request, queryset):
                 messages.error(request, 'Zone is not dynamic: %s' % domain_obj.name)
                 n = n - 1
     if n:
-        messages.info(request, 'Successfully updated %d domains.' % n)
+        messages.info(request, 'Successfully reset the API key of %d domains.' % n)
 reset_api_key.short_description = "Reset API Key"
 
 

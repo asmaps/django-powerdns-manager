@@ -263,6 +263,6 @@ def create_zone_from_template(modeladmin, request, queryset):
         'action_checkbox_name': helpers.ACTION_CHECKBOX_NAME,
     }
     return render_to_response(
-        'powerdns_manager/actions/zone_from_template.html', info_dict, context_instance=RequestContext(request))
+        'powerdns_manager/template/create_zone.html', info_dict, context_instance=RequestContext(request))
 create_zone_from_template.short_description = "Create zone from template"
 

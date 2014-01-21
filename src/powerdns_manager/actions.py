@@ -157,68 +157,13 @@ transfer_zone_to_user.short_description = 'Transfer zone to another user'
 def create_zone_from_template(modeladmin, request, queryset):
     """Action that creates a new zone using the selected template.
     
-    This action first displays a page which provides a text box where the user
-    can enter the origin of the new zone.
-    
-    It checks if the user has change permission.
-    
-    Based on: https://github.com/django/django/blob/1.4.2/django/contrib/admin/actions.py
-    
-    Important
-    ---------
-    In order to work requires some special form fields (see the template).
+    Accepts only one selected template.
     
     """
-    opts = modeladmin.model._meta
-    app_label = opts.app_label
-    
-    # Check the number of selected templates. This action can work on a single template.
-    
     n = queryset.count()
     if n != 1:
-        messages.error(request, 'Only one template may be selected for this action.')
-        return None
-    
-    # Check that the user has change permission
-    if not modeladmin.has_change_permission(request):
-        raise PermissionDenied
-    
-    # The user has entered an origin through the forms.TemplateOriginForm form.
-    # Make the changes to the selected
-    # objects and return a None to display the change list view again.
-    #if request.method == 'POST':
-    if request.POST.get('post'):
-        origin = request.POST.get('origin')
-        
-        if origin:
-            
-            # The queryset contains exactly one object. Checked above.
-            template_obj = queryset[0]
-            
-            # Replace placeholder with origin in the template content.
-            zonetext = template_obj.content.replace('#origin#', origin)
-            
-            process_zone_file(origin, zonetext, request.user)
-            
-            #obj_display = force_unicode(obj)
-            #modeladmin.log_change(request, obj, obj_display)
-            messages.info(request, "Successfully created zone '%s' from template '%s'." % (origin, template_obj.name))
-            
-        # Return None to display the change list page again.
-        #return None
-        # Redirect to the new zone's change form.
-        Domain = cache.get_model('powerdns_manager', 'Domain')
-        domain_obj = Domain.objects.get(name=origin)
-        return HttpResponseRedirect(reverse('admin:%s_domain_change' % app_label, args=(domain_obj.id,)))
-    
-    info_dict = {
-        'form': TemplateOriginForm(),
-        'queryset': queryset,
-        'opts': opts,
-        'app_label': app_label,
-        'action_checkbox_name': helpers.ACTION_CHECKBOX_NAME,
-    }
-    return render_to_response(
-        'powerdns_manager/template/create_zone.html', info_dict, context_instance=RequestContext(request))
+        messages.error(request, 'Only one template may be selected.')
+        return HttpResponseRedirect(reverse('admin:powerdns_manager_zonetemplate_changelist'))
+    return HttpResponseRedirect(reverse('template_create_zone', args=(queryset[0].id,)))
 create_zone_from_template.short_description = "Create zone from template"
 

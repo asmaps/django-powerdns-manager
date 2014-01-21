@@ -35,4 +35,5 @@ urlpatterns = patterns('powerdns_manager.views',
     url(r'^zone/set-ttl/(?P<id_list>[0-9,]+)/$', 'zone_set_ttl_view', name='zone_set_ttl'),
     url(r'^zone/clone/(?P<zone_id>[0-9]+)/$', 'zone_clone_view', name='zone_clone'),
     url(r'^zone/transfer/(?P<id_list>[0-9,]+)/$', 'zone_transfer_view', name='zone_transfer'),
+    url(r'^template/create-zone/(?P<template_id>[0-9]+)/$', 'template_create_zone_view', name='template_create_zone'),
 )

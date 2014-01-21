@@ -678,3 +678,60 @@ def zone_transfer_view(request, id_list):
 
 
 
+@login_required
+@csrf_protect
+def template_create_zone_view(request, template_id):
+    """Create zone from template.
+    
+    Accepts a template ID.
+    
+    An intermediate page asking for the origin of the new zone is used.
+    
+    """
+    # Permission check on models.
+    if not request.user.has_perms([
+            'powerdns_manager.add_domain',
+        ]):
+        messages.error(request, 'Insufficient permissions for this action.')
+        return HttpResponseRedirect(reverse('admin:powerdns_manager_zonetemplate_changelist'))
+    
+    if request.method == 'POST':
+        origin = request.POST.get('origin')
+        
+        # Get the models
+        ZoneTemplate = cache.get_model('powerdns_manager', 'ZoneTemplate')
+        Domain = cache.get_model('powerdns_manager', 'Domain')
+        
+        template_obj = ZoneTemplate.objects.get(id=template_id)
+        template_obj_display = force_unicode(template_obj)
+        
+        # Replace placeholder with origin in the template content.
+        zonetext = template_obj.content.replace('#origin#', origin)
+        
+        process_zone_file(origin, zonetext, request.user)
+        
+        messages.info(request, "Successfully created zone '%s' from template '%s'." % (origin, template_obj.name))
+        
+        # Redirect to the new zone's change form.
+        domain_obj = Domain.objects.get(name=origin)
+        return HttpResponseRedirect(reverse('admin:powerdns_manager_domain_change', args=(domain_obj.id,)))
+                    
+                    # Create log entry
+#                     LogEntry.objects.log_action(
+#                         user_id         = request.user.pk, 
+#                         content_type_id = ContentType.objects.get_for_model(obj).pk,
+#                         object_id       = obj.pk,
+#                         object_repr     = obj_display, 
+#                         action_flag     = CHANGE
+#                     )
+
+    else:
+        form = TemplateOriginForm()
+        
+    info_dict = {
+        'form': form,
+        'template_id': template_id,
+    }
+    return render_to_response(
+        'powerdns_manager/template/create_zone.html', info_dict, context_instance=RequestContext(request))
+    

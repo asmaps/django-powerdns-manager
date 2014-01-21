@@ -34,17 +34,6 @@ from django.core.urlresolvers import reverse
 from powerdns_manager.utils import generate_api_key
 
 
-
-# Action for
-# - set change date
-# - set serial (?)
-# - set TTL to 300, 3600, 86400
-#
-#def test_action(modeladmin, request, queryset):
-#    messages.add_message(request, messages.INFO, 'The test action was successful.')
-#test_action.short_description = "Test Action"
-
-
 def reset_api_key(modeladmin, request, queryset):
     DynamicZone = cache.get_model('powerdns_manager', 'DynamicZone')
     n = queryset.count()
@@ -77,7 +66,6 @@ def set_domain_type_bulk(modeladmin, request, queryset):
 set_domain_type_bulk.short_description = "Set domain type"
 
 
-
 def set_ttl_bulk(modeladmin, request, queryset):
     """Action that resets TTL information on all resource records of the zone
     to the specified value.
@@ -88,7 +76,6 @@ def set_ttl_bulk(modeladmin, request, queryset):
     selected = request.POST.getlist(helpers.ACTION_CHECKBOX_NAME)
     return HttpResponseRedirect(reverse('zone_set_ttl', args=(','.join(selected),)))
 set_ttl_bulk.short_description = 'Set Resource Records TTL'
-
 
 
 def force_serial_update(modeladmin, request, queryset):
@@ -102,12 +89,11 @@ def force_serial_update(modeladmin, request, queryset):
 force_serial_update.short_description = "Force serial update"
 
 
-
 def clone_zone(modeladmin, request, queryset):
     """Actions that clones the selected zone.
-    
+
     Accepts only one selected zone.
-    
+
     """
     n = queryset.count()
     if n != 1:
@@ -124,7 +110,6 @@ def clone_zone(modeladmin, request, queryset):
 clone_zone.short_description = "Clone the selected zone"
 
 
-
 def transfer_zone_to_user(modeladmin, request, queryset):
     """Action that transfers the zone to another user."""
     # Check that the user has change permission for the change modeladmin form.
@@ -133,7 +118,6 @@ def transfer_zone_to_user(modeladmin, request, queryset):
     selected = request.POST.getlist(helpers.ACTION_CHECKBOX_NAME)
     return HttpResponseRedirect(reverse('zone_transfer', args=(','.join(selected),)))
 transfer_zone_to_user.short_description = 'Transfer zone to another user'
-
 
 
 def create_zone_from_template(modeladmin, request, queryset):

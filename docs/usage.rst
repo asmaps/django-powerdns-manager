@@ -61,7 +61,7 @@ Example request using ``curl``::
         -F "hostname=ns1.centos.example.org" \
         -F "ipv4=10.1.2.3" \
         -F "ipv6=3ffe:1900:4545:3:200:f8ff:fe21:67cf" \
-        https://192.168.0.101/powerdns/update/
+        https://192.168.0.101/powerdns/zone/update/
 
 TODO
 

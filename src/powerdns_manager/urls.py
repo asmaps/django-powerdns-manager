@@ -27,6 +27,8 @@
 from django.conf.urls import patterns, include, url
 
 urlpatterns = patterns('powerdns_manager.views',
+    # Client IP
+    url(r'^tools/getip/$', 'tools_getip_view', name='tools_getip'),
     # Zone tools
     url(r'^zone/import/zonefile/$', 'import_zone_view', name='import_zone'),
     url(r'^zone/import/axfr/$', 'import_axfr_view', name='import_axfr'),

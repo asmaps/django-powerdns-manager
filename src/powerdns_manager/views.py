@@ -152,6 +152,11 @@ def export_zone_view(request, origin):
 
 
 @csrf_exempt
+def tools_getip_view(request):
+    return HttpResponse(request.META.get('REMOTE_ADDR'), content_type='text/plain')
+
+
+@csrf_exempt
 def dynamic_ip_update_view(request):
     """
     

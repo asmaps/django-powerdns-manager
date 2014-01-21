@@ -438,14 +438,11 @@ class DynamicZone(models.Model):
 
 
 class ZoneTemplate(models.Model):
-    """Model for zone templates.
-    
-    """
+    """Model for zone templates."""
     name = models.CharField(max_length=100, verbose_name=_('name'), help_text="""Enter a name for the template.""")
     content = models.TextField(blank=True, null=True, verbose_name=_('content'), help_text="""Enter the template content. The placeholder #origin# is expanded to the origin of the zone to which the template is applied.""")
     notes = models.TextField(blank=True, null=True, verbose_name=_('notes'), help_text="""Space for notes about the template.""")
     
-    # PowerDNS Manager internal fields
     date_modified = models.DateTimeField(auto_now=True, verbose_name=_('Last Modified'))
     created_by = models.ForeignKey(AUTH_USER_MODEL, related_name='%(app_label)s_%(class)s_created_by', verbose_name=_('template creator'), help_text="""The Django user this template belongs to.""")
     

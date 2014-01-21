@@ -81,8 +81,8 @@ def import_zone_view(request):
                 info_dict = {
                     'strerror': mark_safe(str(e)),
                 }
-                return render_to_response('powerdns_manager/import/error.html', info_dict)
-            return render_to_response('powerdns_manager/import/success.html', {})
+                return render_to_response('powerdns_manager/zone/import/error.html', info_dict)
+            return render_to_response('powerdns_manager/zone/import/success.html', {})
             
     else:
         form = ZoneImportForm() # An unbound form
@@ -91,7 +91,7 @@ def import_zone_view(request):
         'form': form,
     }
     return render_to_response(
-        'powerdns_manager/import/zone.html', info_dict, context_instance=RequestContext(request))
+        'powerdns_manager/zoneimport/zonefile.html', info_dict, context_instance=RequestContext(request))
 
 
 
@@ -111,9 +111,9 @@ def import_axfr_view(request):
                 info_dict = {
                     'strerror': mark_safe(str(e)),
                 }
-                return render_to_response('powerdns_manager/import/error.html', {})
+                return render_to_response('powerdns_manager/zone/import/error.html', {})
             info_dict = {'is_axfr': True}
-            return render_to_response('powerdns_manager/import/success.html', info_dict)
+            return render_to_response('powerdns_manager/zone/import/success.html', info_dict)
             
     else:
         form = AxfrImportForm() # An unbound form
@@ -122,7 +122,7 @@ def import_axfr_view(request):
         'form': form,
     }
     return render_to_response(
-        'powerdns_manager/import/axfr.html', info_dict, context_instance=RequestContext(request))
+        'powerdns_manager/zone/import/axfr.html', info_dict, context_instance=RequestContext(request))
 
 
 
@@ -134,7 +134,7 @@ def export_zone_view(request, origin):
         'origin': origin,
     }
     return render_to_response(
-        'powerdns_manager/export/zone.html', info_dict, context_instance=RequestContext(request))
+        'powerdns_manager/zone/export/zonefile.html', info_dict, context_instance=RequestContext(request))
 
 
 
@@ -272,6 +272,61 @@ def dynamic_ip_update_view(request):
     else:
         return HttpResponseNotFound('error:No suitable resource record found')
 
+
+
+@login_required
+@csrf_protect
+def zone_set_type_view(request, id_list):
+    """sets the domain type on the selected zones.
+    
+    Accepts a comma-delimited list of Domain object IDs.
+    
+    An intermediate page asking for the new zone type is used.
+    
+    """
+    # Create a list from the provided comma-delimited list of IDs.
+    id_list = id_list.split(',')
+    
+    # Permission check on models.
+    if not request.user.has_perms([
+            'powerdns_manager.change_domain',
+        ]):
+        messages.error(request, 'Insufficient permissions for this action.')
+        return HttpResponseRedirect(reverse('admin:powerdns_manager_domain_changelist'))
+    
+    if request.method == 'POST':
+        domain_type = request.POST.get('domaintype')
+        
+        Domain = cache.get_model('powerdns_manager', 'Domain')
+        
+        for n, zone_id in enumerate(id_list):
+            obj = Domain.objects.get(id=zone_id)
+            obj_display = force_unicode(obj)
+            
+            # Check change permission
+            if not request.user.has_perm('powerdns_manager.change_domain', obj):
+                messages.error(request, 'Permission denied for domain: %s' % obj_display)
+            else:
+                obj.type = domain_type
+                obj.update_serial()
+                obj.save()
+                
+        n += 1
+        if n == 1:
+            messages.info(request, "Successfully set the type of '%s' to '%s'" % (obj_display, domain_type))
+        elif n > 1:
+            messages.info(request, "Successfully set the type of %s zones to '%s'" % (n, domain_type))
+            
+        # Redirect to the Domain changelist.
+        return HttpResponseRedirect(reverse('admin:powerdns_manager_domain_changelist'))
+    
+    else:
+        info_dict = {
+            'form': ZoneTypeSelectionForm(),
+            'id_list': id_list,
+        }
+        return render_to_response(
+            'powerdns_manager/zone/set_type.html', info_dict, context_instance=RequestContext(request))
 
 
 
@@ -605,59 +660,5 @@ def zone_transfer_view(request, id_list):
     
 
 
-@login_required
-@csrf_protect
-def zone_set_type_view(request, id_list):
-    """sets the domain type on the selected zones.
-    
-    Accepts a comma-delimited list of Domain object IDs.
-    
-    An intermediate page asking for the new zone type is used.
-    
-    """
-    # Create a list from the provided comma-delimited list of IDs.
-    id_list = id_list.split(',')
-    
-    # Permission check on models.
-    if not request.user.has_perms([
-            'powerdns_manager.change_domain',
-        ]):
-        messages.error(request, 'Insufficient permissions for this action.')
-        return HttpResponseRedirect(reverse('admin:powerdns_manager_domain_changelist'))
-    
-    if request.method == 'POST':
-        domain_type = request.POST.get('domaintype')
-        
-        Domain = cache.get_model('powerdns_manager', 'Domain')
-        
-        for n, zone_id in enumerate(id_list):
-            obj = Domain.objects.get(id=zone_id)
-            obj_display = force_unicode(obj)
-            
-            # Check change permission
-            if not request.user.has_perm('powerdns_manager.change_domain', obj):
-                messages.error(request, 'Permission denied for domain: %s' % obj_display)
-            else:
-                obj.type = domain_type
-                obj.update_serial()
-                obj.save()
-                
-        n += 1
-        if n == 1:
-            messages.info(request, "Successfully set the type of '%s' to '%s'" % (obj_display, domain_type))
-        elif n > 1:
-            messages.info(request, "Successfully set the type of %s zones to '%s'" % (n, domain_type))
-            
-        # Redirect to the Domain changelist.
-        return HttpResponseRedirect(reverse('admin:powerdns_manager_domain_changelist'))
-    
-    else:
-        info_dict = {
-            'form': ZoneTypeSelectionForm(),
-            'id_list': id_list,
-        }
-        return render_to_response(
-            'powerdns_manager/zone/set_type.html', info_dict, context_instance=RequestContext(request))
-        
-        
-        
+
+

@@ -27,10 +27,10 @@
 from django.conf.urls import patterns, include, url
 
 urlpatterns = patterns('powerdns_manager.views',
-    url(r'^import/zonefile/$', 'import_zone_view', name='import_zone'),
-    url(r'^import/axfr/$', 'import_axfr_view', name='import_axfr'),
-    url(r'^export/(?P<origin>[/.\-_\w]+)/$', 'export_zone_view', name='export_zone'),
-    url(r'^update/$', 'dynamic_ip_update_view', name='dynamic_ip_update'),
+    url(r'^zone/import/zonefile/$', 'import_zone_view', name='import_zone'),
+    url(r'^zone/import/axfr/$', 'import_axfr_view', name='import_axfr'),
+    url(r'^zone/export/(?P<origin>[/.\-_\w]+)/$', 'export_zone_view', name='export_zone'),
+    url(r'^zone/update/$', 'dynamic_ip_update_view', name='dynamic_ip_update'),
     url(r'^zone/set-type/(?P<id_list>[0-9,]+)/$', 'zone_set_type_view', name='zone_set_type'),
     url(r'^zone/set-ttl/(?P<id_list>[0-9,]+)/$', 'zone_set_ttl_view', name='zone_set_ttl'),
     url(r'^zone/clone/(?P<zone_id>[0-9]+)/$', 'zone_clone_view', name='zone_clone'),

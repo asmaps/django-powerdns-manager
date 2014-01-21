@@ -13,7 +13,12 @@ features of *django-powerdns-manager*.
    therefore it should only be used for such purposes. Please, do not
    use the example project in production.
    
-The example Django project has been configured to use an SQLite database.
+The example Django project has been configured to use two SQLite databases,
+*default* (``main.db``), which is the main database for the Django project,
+and *powerdns* (``powerdns.db``), which is the database where DNS data is stored.
+DNS data can be perfectly stored to the *default* database, but separate
+databases are used in this example project for demonstration purposes.
+ 
 Consequently, PowerDNS has to be configured to use the SQLite backend in
 order to be able to communicate with the managed database. A sample
 configuration file for PowerDNS is included in the example directory.

@@ -54,6 +54,7 @@ from powerdns_manager.forms import DynamicIPUpdateForm
 from powerdns_manager.forms import ZoneTransferForm
 from powerdns_manager.forms import TemplateOriginForm
 from powerdns_manager.forms import TtlSelectionForm
+from powerdns_manager.forms import ZoneTypeSelectionForm
 from powerdns_manager.forms import ClonedZoneDomainForm
 from powerdns_manager.utils import process_zone_file
 from powerdns_manager.utils import process_axfr_response
@@ -602,3 +603,61 @@ def zone_transfer_view(request, id_list):
         return render_to_response(
             'powerdns_manager/zone/transfer.html', info_dict, context_instance=RequestContext(request))
     
+
+
+@login_required
+@csrf_protect
+def zone_set_type_view(request, id_list):
+    """sets the domain type on the selected zones.
+    
+    Accepts a comma-delimited list of Domain object IDs.
+    
+    An intermediate page asking for the new zone type is used.
+    
+    """
+    # Create a list from the provided comma-delimited list of IDs.
+    id_list = id_list.split(',')
+    
+    # Permission check on models.
+    if not request.user.has_perms([
+            'powerdns_manager.change_domain',
+        ]):
+        messages.error(request, 'Insufficient permissions for this action.')
+        return HttpResponseRedirect(reverse('admin:powerdns_manager_domain_changelist'))
+    
+    if request.method == 'POST':
+        domain_type = request.POST.get('domaintype')
+        
+        Domain = cache.get_model('powerdns_manager', 'Domain')
+        
+        for n, zone_id in enumerate(id_list):
+            obj = Domain.objects.get(id=zone_id)
+            obj_display = force_unicode(obj)
+            
+            # Check change permission
+            if not request.user.has_perm('powerdns_manager.change_domain', obj):
+                messages.error(request, 'Permission denied for domain: %s' % obj_display)
+            else:
+                obj.type = domain_type
+                obj.update_serial()
+                obj.save()
+                
+        n += 1
+        if n == 1:
+            messages.info(request, "Successfully set the type of '%s' to '%s'" % (obj_display, domain_type))
+        elif n > 1:
+            messages.info(request, "Successfully set the type of %s zones to '%s'" % (n, domain_type))
+            
+        # Redirect to the Domain changelist.
+        return HttpResponseRedirect(reverse('admin:powerdns_manager_domain_changelist'))
+    
+    else:
+        info_dict = {
+            'form': ZoneTypeSelectionForm(),
+            'id_list': id_list,
+        }
+        return render_to_response(
+            'powerdns_manager/zone/set_type.html', info_dict, context_instance=RequestContext(request))
+        
+        
+        

@@ -86,56 +86,12 @@ reset_api_key.short_description = "Reset API Key"
 
 
 def set_domain_type_bulk(modeladmin, request, queryset):
-    """Actions that sets the domain type on the selected Domain instances.
-    
-    This action first displays a page which provides a dropdown box for the
-    user to select the domain type and then sets the new domain type on the
-    sele3cted objects.
-    
-    It checks if the user has change permission.
-    
-    Based on: https://github.com/django/django/blob/1.4.2/django/contrib/admin/actions.py
-    
-    Important
-    ---------
-    In order to work requires some special form fields (see the template).
-    
-    """
-    opts = modeladmin.model._meta
-    app_label = opts.app_label
-    
-    # Check that the user has change permission for the Domain model
+    """Actions that sets the domain type on the selected Domain instances."""
+    # Check that the user has change permission for the change modeladmin form.
     if not modeladmin.has_change_permission(request):
         raise PermissionDenied
-    
-    # The user has selected a new domain type through the
-    # forms.ZoneTypeSelectionForm form. Make the changes to the selected
-    # objects and return a None to display the change list view again.
-    #if request.method == 'POST':
-    if request.POST.get('post'):
-        domain_type = request.POST.get('domaintype')
-        n = queryset.count()
-        
-        if n and domain_type:
-            for obj in queryset:
-                obj.type = domain_type
-                obj.update_serial()
-                obj.save()
-                obj_display = force_unicode(obj)
-                modeladmin.log_change(request, obj, obj_display)
-            messages.info(request, 'Successfully updated %d domains.' % n)
-        # Return None to display the change list page again.
-        return None
-    
-    info_dict = {
-        'form': ZoneTypeSelectionForm(),
-        'queryset': queryset,
-        'opts': opts,
-        'app_label': app_label,
-        'action_checkbox_name': helpers.ACTION_CHECKBOX_NAME,
-    }
-    return render_to_response(
-        'powerdns_manager/actions/set_domain_type.html', info_dict, context_instance=RequestContext(request))
+    selected = request.POST.getlist(helpers.ACTION_CHECKBOX_NAME)
+    return HttpResponseRedirect(reverse('zone_set_type', args=(','.join(selected),)))
 set_domain_type_bulk.short_description = "Set domain type"
 
 

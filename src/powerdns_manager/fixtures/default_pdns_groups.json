@@ -96,19 +96,19 @@
           "tsigkey"
         ], 
         [
-            "add_zonetemplate", 
-            "powerdns_manager", 
-            "zonetemplate"
+          "add_zonetemplate", 
+          "powerdns_manager", 
+          "zonetemplate"
         ], 
         [
-            "change_zonetemplate", 
-            "powerdns_manager", 
-            "zonetemplate"
+          "change_zonetemplate", 
+          "powerdns_manager", 
+          "zonetemplate"
         ], 
         [
-            "delete_zonetemplate", 
-            "powerdns_manager", 
-            "zonetemplate"
+          "delete_zonetemplate", 
+          "powerdns_manager", 
+          "zonetemplate"
         ]
       ]
     }

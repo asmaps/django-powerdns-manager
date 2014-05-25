@@ -201,6 +201,8 @@ class Record(models.Model):
     # This is set to the current timestamp on every save
     change_date = models.PositiveIntegerField(max_length=11, null=True, verbose_name=_('change date'), help_text="""Timestamp for the last update. This is used by PowerDNS internally.""")
 
+    disabled = models.BooleanField(default=True, verbose_name=_('disabled'), help_text="""Indicates if this record should be active or disabled.""")
+
     # PowerDNS Manager internal fields
     date_modified = models.DateTimeField(auto_now=True, verbose_name=_('Last Modified'))
 
